@@ -5,36 +5,30 @@ pipeline {
 
         stage('Checkout') {
             steps {
-                git branch: 'main',
+                git branch: "${env.BRANCH_NAME}",
                 url: 'https://github.com/Priyanshu498/gitops-poc-pinelabs.git',
                 credentialsId: 'github-priyanshu-poc'
             }
         }
 
-        stage('Read Commit Message') {
+        stage('Detect Environment') {
             steps {
                 script {
 
-                    def msg = sh(
-                        script: "git log -1 --pretty=%B",
-                        returnStdout: true
-                    ).trim()
-
-                    echo "Commit message: ${msg}"
-
-                    if (msg.contains("env=dev")) {
+                    if (env.BRANCH_NAME == "dev") {
                         env.DEPLOY_ENV = "dev"
                     }
 
-                    if (msg.contains("env=qa")) {
+                    else if (env.BRANCH_NAME == "qa") {
                         env.DEPLOY_ENV = "qa"
                     }
 
-                    if (msg.contains("env=prod")) {
+                    else if (env.BRANCH_NAME == "main") {
                         env.DEPLOY_ENV = "prod"
                     }
 
-                    echo "Detected ENV: ${env.DEPLOY_ENV}"
+                    echo "Branch = ${env.BRANCH_NAME}"
+                    echo "Deploy Environment = ${env.DEPLOY_ENV}"
                 }
             }
         }
