@@ -9,26 +9,38 @@ stages {
         }
     }
 
-    stage('Detect Environment') {
+    stage('Read Commit Message') {
         steps {
             script {
 
-                // Jenkins environment variable
-                def branch = env.GIT_BRANCH
+                def msg = sh(
+                    script: "git log -1 --pretty=%B",
+                    returnStdout: true
+                ).trim()
 
-                echo "Git Branch: ${branch}"
+                echo "Commit message: ${msg}"
 
-                if (branch.contains("dev")) {
+                // default environment
+                env.DEPLOY_ENV = "dev"
+
+                if (msg.contains("env=dev")) {
                     env.DEPLOY_ENV = "dev"
                 }
-                else if (branch.contains("qa")) {
+                else if (msg.contains("env=qa")) {
                     env.DEPLOY_ENV = "qa"
                 }
-                else if (branch.contains("main")) {
+                else if (msg.contains("env=prod")) {
                     env.DEPLOY_ENV = "prod"
                 }
+            }
+        }
+    }
 
-                echo "Deploy Environment: ${env.DEPLOY_ENV}"
+    stage('Branch Info') {
+        steps {
+            script {
+                echo "Branch = ${env.GIT_BRANCH}"
+                echo "Deploy Environment = ${env.DEPLOY_ENV}"
             }
         }
     }
@@ -38,15 +50,15 @@ stages {
             script {
 
                 if (env.DEPLOY_ENV == "dev") {
-                    sh 'echo Deploying to DEV environment'
+                    sh 'echo Deploying to DEV'
                 }
 
                 if (env.DEPLOY_ENV == "qa") {
-                    sh 'echo Deploying to QA environment'
+                    sh 'echo Deploying to QA'
                 }
 
                 if (env.DEPLOY_ENV == "prod") {
-                    sh 'echo Deploying to PROD environment'
+                    sh 'echo Deploying to PROD'
                 }
 
             }
