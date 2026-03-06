@@ -1,18 +1,6 @@
 pipeline {
     agent any
 
-    parameters {
-        choice(
-            name: 'ENV',
-            choices: ['dev', 'qa', 'prod'],
-            description: 'Select environment'
-        )
-    }
-
-    environment {
-        ENV = "${params.ENV ?: 'dev'}"
-    }
-
     stages {
 
         stage('Checkout') {
@@ -23,11 +11,31 @@ pipeline {
             }
         }
 
-        stage('Print Event Info') {
+        stage('Read Commit Message') {
             steps {
-                echo "Branch: ${env.GIT_BRANCH}"
-                echo "Environment: ${env.ENV}"
-                echo "Commit: ${env.GIT_COMMIT}"
+                script {
+
+                    def msg = sh(
+                        script: "git log -1 --pretty=%B",
+                        returnStdout: true
+                    ).trim()
+
+                    echo "Commit message: ${msg}"
+
+                    if (msg.contains("env=dev")) {
+                        env.DEPLOY_ENV = "dev"
+                    }
+
+                    if (msg.contains("env=qa")) {
+                        env.DEPLOY_ENV = "qa"
+                    }
+
+                    if (msg.contains("env=prod")) {
+                        env.DEPLOY_ENV = "prod"
+                    }
+
+                    echo "Detected ENV: ${env.DEPLOY_ENV}"
+                }
             }
         }
 
@@ -35,15 +43,15 @@ pipeline {
             steps {
                 script {
 
-                    if (env.ENV == 'dev') {
+                    if (env.DEPLOY_ENV == "dev") {
                         sh 'echo Deploying to DEV'
                     }
 
-                    if (env.ENV == 'qa') {
+                    if (env.DEPLOY_ENV == "qa") {
                         sh 'echo Deploying to QA'
                     }
 
-                    if (env.ENV == 'prod') {
+                    if (env.DEPLOY_ENV == "prod") {
                         sh 'echo Deploying to PROD'
                     }
 
