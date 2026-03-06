@@ -5,9 +5,7 @@ pipeline {
 
         stage('Checkout') {
             steps {
-                git branch: "${env.BRANCH_NAME}",
-                url: 'https://github.com/Priyanshu498/gitops-poc-pinelabs.git',
-                credentialsId: 'github-priyanshu-poc'
+                checkout scm
             }
         }
 
@@ -15,20 +13,24 @@ pipeline {
             steps {
                 script {
 
-                    if (env.BRANCH_NAME == "dev") {
+                    def branch = sh(
+                        script: "git rev-parse --abbrev-ref HEAD",
+                        returnStdout: true
+                    ).trim()
+
+                    echo "Current Branch: ${branch}"
+
+                    if (branch == "dev") {
                         env.DEPLOY_ENV = "dev"
                     }
-
-                    else if (env.BRANCH_NAME == "qa") {
+                    else if (branch == "qa") {
                         env.DEPLOY_ENV = "qa"
                     }
-
-                    else if (env.BRANCH_NAME == "main") {
+                    else if (branch == "main") {
                         env.DEPLOY_ENV = "prod"
                     }
 
-                    echo "Branch = ${env.BRANCH_NAME}"
-                    echo "Deploy Environment = ${env.DEPLOY_ENV}"
+                    echo "Deploy ENV: ${env.DEPLOY_ENV}"
                 }
             }
         }
