@@ -1,4 +1,3 @@
-
 pipeline {
     agent any
 
@@ -8,6 +7,10 @@ pipeline {
             choices: ['dev', 'qa', 'prod'],
             description: 'Select environment'
         )
+    }
+
+    environment {
+        ENV = "${params.ENV ?: 'dev'}"
     }
 
     stages {
@@ -23,7 +26,7 @@ pipeline {
         stage('Print Event Info') {
             steps {
                 echo "Branch: ${env.GIT_BRANCH}"
-                echo "Environment: ${params.ENV}"
+                echo "Environment: ${env.ENV}"
                 echo "Commit: ${env.GIT_COMMIT}"
             }
         }
@@ -32,19 +35,16 @@ pipeline {
             steps {
                 script {
 
-                    if (params.ENV == 'dev') {
-                        sh 'echo Deploying to DEV environment'
-                        sh './deploy-dev.sh'
+                    if (env.ENV == 'dev') {
+                        sh 'echo Deploying to DEV'
                     }
 
-                    if (params.ENV == 'qa') {
-                        sh 'echo Deploying to QA environment'
-                        sh './deploy-qa.sh'
+                    if (env.ENV == 'qa') {
+                        sh 'echo Deploying to QA'
                     }
 
-                    if (params.ENV == 'prod') {
-                        sh 'echo Deploying to PROD environment'
-                        sh './deploy-prod.sh'
+                    if (env.ENV == 'prod') {
+                        sh 'echo Deploying to PROD'
                     }
 
                 }
